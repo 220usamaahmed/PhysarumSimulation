@@ -62,7 +62,20 @@ void DiffuseAndDissipate (uint3 id : SV_DispatchThreadID)
 	if (id.x < 0 || id.x >= (uint)canvasWidth || id.y < 0 || id.y >= (uint)canvasHeight) {
 		return;
 	}
-
+    
     float4 originalValue = DiffuseAndDissipateTrailMap[id.xy];
-    DiffuseAndDissipateTrailMap[id.xy] = originalValue - 0.001;
+
+	// 3x3 blur simulates diffusion
+    float4 sum = 0;
+	for (int offsetX = -1; offsetX <= 1; offsetX ++) {
+		for (int offsetY = -1; offsetY <= 1; offsetY ++) {
+			int sampleX = min(canvasWidth-1, max(0, id.x + offsetX));
+			int sampleY = min(canvasHeight-1, max(0, id.y + offsetY));
+			sum += DiffuseAndDissipateTrailMap[int2(sampleX, sampleY)];
+		}
+	}
+    float4 diffusedValue = sum / 9;
+
+    // Subtracting value simulates dissipation
+    DiffuseAndDissipateTrailMap[id.xy] = max(0, diffusedValue - 0.001);
 }

@@ -82,7 +82,7 @@ public class PhysarumSimulation : MonoBehaviour
         if (agentsBuffer != null) PhysarumSimulationComputeShader.SetBuffer(0, "Agents", agentsBuffer);
         PhysarumSimulationComputeShader.Dispatch(0, Mathf.CeilToInt(NUM_AGENTS / 16.0f), 1, 1);
 
-        PhysarumSimulationComputeShader.SetTexture(1, "DiffuseAndDessipateTrailMap", trailMap);
+        PhysarumSimulationComputeShader.SetTexture(1, "DiffuseAndDissipateTrailMap", trailMap);
         PhysarumSimulationComputeShader.Dispatch(1, Mathf.CeilToInt(WIDTH / 8.0f), Mathf.CeilToInt(HEIGHT / 8.0f), 1);
 
         Graphics.Blit(trailMap, dest);
