@@ -1,11 +1,11 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CreateTrail
+#pragma kernel UpdateAgent
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 const float PI = 3.141;
 
-RWTexture2D<float4> TrailMap;
+RWTexture2D<float4> UpdateAgentTrailMap;
 
 struct Agent
 {
@@ -21,7 +21,7 @@ int canvasHeight;
 uint numAgents;
 
 [numthreads(16,1,1)]
-void CreateTrail (uint3 id : SV_DispatchThreadID)
+void UpdateAgent (uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= numAgents) return;
 
@@ -49,5 +49,20 @@ void CreateTrail (uint3 id : SV_DispatchThreadID)
 
     if (updatePosition) Agents[id.x].position = newPosition; 
 
-    TrailMap[int2(position)] = float4(1, 1, 1, 1);
+    UpdateAgentTrailMap[int2(position)] = float4(1, 1, 1, 1);
+}
+
+#pragma kernel DiffuseAndDissipate
+
+RWTexture2D<float4> DiffuseAndDissipateTrailMap;
+
+[numthreads(8,8,1)]
+void DiffuseAndDissipate (uint3 id : SV_DispatchThreadID)
+{
+	if (id.x < 0 || id.x >= (uint)canvasWidth || id.y < 0 || id.y >= (uint)canvasHeight) {
+		return;
+	}
+
+    float4 originalValue = DiffuseAndDissipateTrailMap[id.xy];
+    DiffuseAndDissipateTrailMap[id.xy] = originalValue - 0.001;
 }
