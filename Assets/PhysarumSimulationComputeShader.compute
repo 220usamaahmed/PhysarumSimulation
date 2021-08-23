@@ -1,14 +1,53 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel CreateTrail
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-RWTexture2D<float4> Result;
+const float PI = 3.141;
 
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+RWTexture2D<float4> TrailMap;
+
+struct Agent
 {
-    // TODO: insert actual code here!
+    float2 position;
+    float speed;
+    float angle;
+};
 
-    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+RWStructuredBuffer<Agent> Agents;
+
+int canvasWidth;
+int canvasHeight;
+uint numAgents;
+
+[numthreads(16,1,1)]
+void CreateTrail (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= numAgents) return;
+
+    Agent agent = Agents[id.x];
+    float2 position = agent.position;
+    float speed = agent.speed;
+    float angle = agent.angle;
+
+    float2 velocity = speed * float2(cos(angle), sin(angle));
+    float2 newPosition = position + velocity;
+
+    bool updatePosition = true;
+
+    if (newPosition.x <= 0 || newPosition.x >= canvasWidth)
+    {
+        Agents[id.x].angle = 3.14 - angle;
+        updatePosition = false;
+    }
+
+    if (newPosition.y <= 0 || newPosition.y >= canvasHeight)
+    {
+        Agents[id.x].angle *= -1;
+        updatePosition = false;
+    }
+
+    if (updatePosition) Agents[id.x].position = newPosition; 
+
+    TrailMap[int2(position)] = float4(1, 1, 1, 1);
 }
