@@ -20,20 +20,48 @@ int canvasWidth;
 int canvasHeight;
 uint numAgents;
 
-uint hash(uint state)
+float random(uint seed)
 {
-    state ^= 2747636419u;
-    state *= 2654435769u;
-    state ^= state >> 16;
-    state *= 2654435769u;
-    state ^= state >> 16;
-    state *= 2654435769u;
-    return state;
+    seed ^= 2747636419u;
+    seed *= 2654435769u;
+    seed ^= seed >> 16;
+    seed *= 2654435769u;
+    seed ^= seed >> 16;
+    seed *= 2654435769u;
+    return seed / 4294967295.0;
 }
 
-float scaleToRange01(uint state)
+float getUpdatedAngle(float2 agentPosition, float agentAngle)
 {
-    return state / 4294967295.0;
+    float sampleAngle, sampleLeft, sampleStraight, sampleRight;
+    float2 sampleOffset;
+
+    // Sampling Left
+    sampleAngle = agentAngle + 0.5;
+    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
+    sampleLeft = UpdateAgentTrailMap[int2(agentPosition + sampleOffset)].r;
+
+    // Sample Straight
+    sampleAngle = agentAngle;
+    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
+    sampleStraight = UpdateAgentTrailMap[int2(agentPosition + sampleOffset)].r;
+
+    // Sample Right
+    sampleAngle = agentAngle - 0.5;
+    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
+    sampleRight = UpdateAgentTrailMap[int2(agentPosition + sampleOffset)].r;
+
+    if (sampleStraight < sampleLeft && sampleStraight < sampleRight)
+	{
+		float randomSteerStrength = random(agentPosition.y * canvasWidth + agentPosition.x);
+
+		if (randomSteerStrength >= 0.5) return agentAngle - 0.78;
+		else return agentAngle + 0.78;
+	}
+	else if (sampleLeft < sampleRight) return agentAngle - 0.78;
+	else if (sampleLeft > sampleRight) return agentAngle + 0.78;
+
+    return agentAngle;
 }
 
 [numthreads(16,1,1)]
@@ -46,58 +74,25 @@ void UpdateAgent (uint3 id : SV_DispatchThreadID)
     float speed = agent.speed;
     float angle = agent.angle;
 
-    float sampleAngle, sampleLeft, sampleStraight, sampleRight;
-    float2 sampleOffset;
-
-    // Sampling Left
-    sampleAngle = angle + 0.5;
-    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
-    sampleLeft = UpdateAgentTrailMap[int2(position + sampleOffset)].r;
-
-    // Sample Straight
-    sampleAngle = angle;
-    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
-    sampleStraight = UpdateAgentTrailMap[int2(position + sampleOffset)].r;
-
-    // Sample Right
-    sampleAngle = angle - 0.5;
-    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
-    sampleRight = UpdateAgentTrailMap[int2(position + sampleOffset)].r;
-
-    if (sampleStraight < sampleLeft && sampleStraight < sampleRight)
-	{
-		uint random = hash(position.y * canvasWidth + position.x);
-		float randomSteerStrength = scaleToRange01(random);
-
-		if (randomSteerStrength >= 0.5) Agents[id.x].angle -= 0.78;
-		else Agents[id.x].angle += 0.78;
-	}
-	else if (sampleLeft < sampleRight)
-	{
-		Agents[id.x].angle -= 0.78;
-	}
-	else if (sampleLeft > sampleRight)
-	{
-		Agents[id.x].angle += 0.78;
-	}
+    Agents[id.x].angle = getUpdatedAngle(position, angle);
 
     float2 velocity = speed * float2(cos(angle), sin(angle));
     float2 newPosition = position + velocity;
 
+    // Checking edge collisions
     bool updatePosition = true;
-
     if (newPosition.x <= 0 || newPosition.x >= canvasWidth)
     {
         Agents[id.x].angle = 3.14 - angle;
         updatePosition = false;
     }
-
     if (newPosition.y <= 0 || newPosition.y >= canvasHeight)
     {
         Agents[id.x].angle *= -1;
         updatePosition = false;
     }
 
+    // Updating position if new position is within bounds
     if (updatePosition) Agents[id.x].position = newPosition; 
 
     UpdateAgentTrailMap[int2(position)] = float4(1, 1, 1, 1);
