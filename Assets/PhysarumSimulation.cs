@@ -18,7 +18,7 @@ public class PhysarumSimulation : MonoBehaviour
         public float angle;
     }
 
-    private int NUM_AGENTS = 10;
+    private int NUM_AGENTS = 10000;
     private ComputeBuffer agentsBuffer;
 
     private void OnEnable()

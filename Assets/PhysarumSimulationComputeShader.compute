@@ -20,6 +20,22 @@ int canvasWidth;
 int canvasHeight;
 uint numAgents;
 
+uint hash(uint state)
+{
+    state ^= 2747636419u;
+    state *= 2654435769u;
+    state ^= state >> 16;
+    state *= 2654435769u;
+    state ^= state >> 16;
+    state *= 2654435769u;
+    return state;
+}
+
+float scaleToRange01(uint state)
+{
+    return state / 4294967295.0;
+}
+
 [numthreads(16,1,1)]
 void UpdateAgent (uint3 id : SV_DispatchThreadID)
 {
@@ -29,6 +45,41 @@ void UpdateAgent (uint3 id : SV_DispatchThreadID)
     float2 position = agent.position;
     float speed = agent.speed;
     float angle = agent.angle;
+
+    float sampleAngle, sampleLeft, sampleStraight, sampleRight;
+    float2 sampleOffset;
+
+    // Sampling Left
+    sampleAngle = angle + 0.5;
+    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
+    sampleLeft = UpdateAgentTrailMap[int2(position + sampleOffset)].r;
+
+    // Sample Straight
+    sampleAngle = angle;
+    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
+    sampleStraight = UpdateAgentTrailMap[int2(position + sampleOffset)].r;
+
+    // Sample Right
+    sampleAngle = angle - 0.5;
+    sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
+    sampleRight = UpdateAgentTrailMap[int2(position + sampleOffset)].r;
+
+    if (sampleStraight < sampleLeft && sampleStraight < sampleRight)
+	{
+		uint random = hash(position.y * canvasWidth + position.x);
+		float randomSteerStrength = scaleToRange01(random);
+
+		if (randomSteerStrength >= 0.5) Agents[id.x].angle -= 0.78;
+		else Agents[id.x].angle += 0.78;
+	}
+	else if (sampleLeft < sampleRight)
+	{
+		Agents[id.x].angle -= 0.78;
+	}
+	else if (sampleLeft > sampleRight)
+	{
+		Agents[id.x].angle += 0.78;
+	}
 
     float2 velocity = speed * float2(cos(angle), sin(angle));
     float2 newPosition = position + velocity;
