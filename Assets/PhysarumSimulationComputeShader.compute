@@ -120,8 +120,8 @@ void DiffuseAndDissipate (uint3 id : SV_DispatchThreadID)
 			sum += DiffuseAndDissipateTrailMap[int2(sampleX, sampleY)];
 		}
 	}
-    float4 diffusedValue = sum / 9;
+    float4 diffusedValue = 0.1 * (sum / 9) + 0.9 * originalValue;
 
     // Subtracting value simulates dissipation
-    DiffuseAndDissipateTrailMap[id.xy] = max(0, diffusedValue - 0.001);
+    DiffuseAndDissipateTrailMap[id.xy] = max(0, diffusedValue - 0.01);
 }

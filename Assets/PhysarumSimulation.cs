@@ -6,8 +6,8 @@ public class PhysarumSimulation : MonoBehaviour
 {
     public ComputeShader PhysarumSimulationComputeShader;
 
-    private const int WIDTH = 400;
-    private const int HEIGHT = 400;
+    private const int WIDTH = 800;
+    private const int HEIGHT = 800;
 
     private RenderTexture trailMap;
 
@@ -18,7 +18,7 @@ public class PhysarumSimulation : MonoBehaviour
         public float angle;
     }
 
-    private int NUM_AGENTS = 10000;
+    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.15f);
     private ComputeBuffer agentsBuffer;
 
     private void OnEnable()
