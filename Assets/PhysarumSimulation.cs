@@ -18,21 +18,12 @@ public class PhysarumSimulation : MonoBehaviour
         public float angle;
     }
 
-    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.15f);
+    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.05f);
     private ComputeBuffer agentsBuffer;
 
     private void OnEnable()
     {
-        List<Agent> agents = new List<Agent>();
-
-        for (int i = 0; i < NUM_AGENTS; ++i)
-        {
-            Agent agent = new Agent();
-            agent.position = new Vector2(WIDTH / 2, HEIGHT / 2);
-            agent.speed = Random.Range(0.4f, 0.8f);
-            agent.angle = Random.Range(0.0f, 2 * Mathf.PI);
-            agents.Add(agent);
-        }
+        List<Agent> agents = InitAgents01();
 
         if (agentsBuffer != null) agentsBuffer.Release();
 
@@ -41,6 +32,58 @@ public class PhysarumSimulation : MonoBehaviour
             agentsBuffer = new ComputeBuffer(agents.Count, 16);
             agentsBuffer.SetData(agents);
         }
+    }
+
+    private List<Agent> InitAgents01()
+    {
+        List<Agent> agents = new List<Agent>();
+
+        float theta;
+        float r = 320;
+
+        for (int i = 0; i < NUM_AGENTS; ++i)
+        {
+            Agent agent = new Agent();
+            
+            theta = Random.Range(0, 2 * Mathf.PI);
+            agent.position = new Vector2(
+                WIDTH * 0.5f + r * Mathf.Cos(theta), 
+                HEIGHT * 0.5f + r * Mathf.Sin(theta));
+            
+            agent.speed = Random.Range(0.4f, 0.8f);
+            agent.angle = theta - Mathf.PI;
+            agents.Add(agent);
+        }
+
+        return agents;
+    }
+
+    private List<Agent> InitAgents02()
+    {
+        List<Agent> agents = new List<Agent>();
+
+        for (int i = 0; i < NUM_AGENTS / 20; ++i)
+        {
+            for (int j = 0; j < 10; ++j)
+            {
+                Agent agent = new Agent();
+                agent.position = new Vector2(j * WIDTH / 10, 0);
+                agent.speed = Random.Range(0.2f, 0.8f);
+                agent.angle = Mathf.PI / 2;
+                agents.Add(agent);
+            }
+
+            for (int j = 0; j < 10; ++j)
+            {
+                Agent agent = new Agent();
+                agent.position = new Vector2(0, j * WIDTH / 10);
+                agent.speed = Random.Range(0.2f, 0.3f);
+                agent.angle = 0;
+                agents.Add(agent);
+            }
+        }
+
+        return agents;
     }
 
     private void OnDisable()
@@ -54,7 +97,6 @@ public class PhysarumSimulation : MonoBehaviour
         PhysarumSimulationComputeShader.SetInt("canvasWidth", WIDTH);
         PhysarumSimulationComputeShader.SetInt("canvasHeight", HEIGHT);
         PhysarumSimulationComputeShader.SetInt("numAgents", NUM_AGENTS);
-
     }
 
     private static void InitRenderTexture(ref RenderTexture renderTexture)

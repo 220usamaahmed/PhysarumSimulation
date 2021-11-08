@@ -55,11 +55,11 @@ float getUpdatedAngle(float2 agentPosition, float agentAngle)
 	{
 		float randomSteerStrength = random(agentPosition.y * canvasWidth + agentPosition.x);
 
-		if (randomSteerStrength >= 0.5) return agentAngle - 0.78;
-		else return agentAngle + 0.78;
+		if (randomSteerStrength >= 0.5) return agentAngle - (-0.78);
+		else return agentAngle + (-0.78);
 	}
-	else if (sampleLeft < sampleRight) return agentAngle - 0.78;
-	else if (sampleLeft > sampleRight) return agentAngle + 0.78;
+	else if (sampleLeft < sampleRight) return agentAngle - (-0.78);
+	else if (sampleLeft > sampleRight) return agentAngle + (-0.78);
 
     return agentAngle;
 }
@@ -120,7 +120,7 @@ void DiffuseAndDissipate (uint3 id : SV_DispatchThreadID)
 			sum += DiffuseAndDissipateTrailMap[int2(sampleX, sampleY)];
 		}
 	}
-    float4 diffusedValue = 0.1 * (sum / 9) + 0.9 * originalValue;
+    float4 diffusedValue = 0.99 * (sum / 9) + 0.01 * originalValue;
 
     // Subtracting value simulates dissipation
     DiffuseAndDissipateTrailMap[id.xy] = max(0, diffusedValue - 0.01);
