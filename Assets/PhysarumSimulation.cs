@@ -6,8 +6,8 @@ public class PhysarumSimulation : MonoBehaviour
 {
     public ComputeShader PhysarumSimulationComputeShader;
 
-    private const int WIDTH = 800;
-    private const int HEIGHT = 800;
+    private const int WIDTH = 960;
+    private const int HEIGHT = 960;
 
     private RenderTexture trailMap;
 
@@ -16,9 +16,10 @@ public class PhysarumSimulation : MonoBehaviour
         public Vector2 position;
         public float speed;
         public float angle;
+        public int species;
     }
 
-    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.05f);
+    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.4f);
     private ComputeBuffer agentsBuffer;
 
     private void OnEnable()
@@ -29,7 +30,7 @@ public class PhysarumSimulation : MonoBehaviour
 
         if (agents.Count > 0)
         {
-            agentsBuffer = new ComputeBuffer(agents.Count, 16);
+            agentsBuffer = new ComputeBuffer(agents.Count, 20);
             agentsBuffer.SetData(agents);
         }
     }
@@ -49,9 +50,9 @@ public class PhysarumSimulation : MonoBehaviour
             agent.position = new Vector2(
                 WIDTH * 0.5f + r * Mathf.Cos(theta), 
                 HEIGHT * 0.5f + r * Mathf.Sin(theta));
-            
             agent.speed = Random.Range(0.4f, 0.8f);
-            agent.angle = theta - Mathf.PI;
+            agent.angle = theta;
+            agent.species = Random.Range(0, 3);
             agents.Add(agent);
         }
 
@@ -70,6 +71,7 @@ public class PhysarumSimulation : MonoBehaviour
                 agent.position = new Vector2(j * WIDTH / 10, 0);
                 agent.speed = Random.Range(0.2f, 0.8f);
                 agent.angle = Mathf.PI / 2;
+                agent.species = 0;
                 agents.Add(agent);
             }
 
@@ -79,6 +81,7 @@ public class PhysarumSimulation : MonoBehaviour
                 agent.position = new Vector2(0, j * WIDTH / 10);
                 agent.speed = Random.Range(0.2f, 0.3f);
                 agent.angle = 0;
+                agent.species = 1;
                 agents.Add(agent);
             }
         }

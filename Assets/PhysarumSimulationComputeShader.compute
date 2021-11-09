@@ -12,6 +12,7 @@ struct Agent
     float2 position;
     float speed;
     float angle;
+    int species;
 };
 
 RWStructuredBuffer<Agent> Agents;
@@ -31,7 +32,16 @@ float random(uint seed)
     return seed / 4294967295.0;
 }
 
-float getUpdatedAngle(float2 agentPosition, float agentAngle)
+float getColorComponent(float4 color, int component)
+{
+    if (component == 0) return color.r;
+    else if (component == 1) return color.g;
+    else if (component == 2) return color.b;
+    else if (component == 3) return color.a;
+    else return -1;
+}
+
+float getUpdatedAngle(float2 agentPosition, float agentAngle, int species)
 {
     float sampleAngle, sampleLeft, sampleStraight, sampleRight;
     float2 sampleOffset;
@@ -39,27 +49,27 @@ float getUpdatedAngle(float2 agentPosition, float agentAngle)
     // Sampling Left
     sampleAngle = agentAngle + 0.5;
     sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
-    sampleLeft = UpdateAgentTrailMap[int2(agentPosition + sampleOffset)].r;
+    sampleLeft = getColorComponent(UpdateAgentTrailMap[int2(agentPosition + sampleOffset)], species);
 
     // Sample Straight
     sampleAngle = agentAngle;
     sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
-    sampleStraight = UpdateAgentTrailMap[int2(agentPosition + sampleOffset)].r;
+    sampleStraight = getColorComponent(UpdateAgentTrailMap[int2(agentPosition + sampleOffset)], species);
 
     // Sample Right
     sampleAngle = agentAngle - 0.5;
     sampleOffset = 4 * float2(cos(sampleAngle), sin(sampleAngle));
-    sampleRight = UpdateAgentTrailMap[int2(agentPosition + sampleOffset)].r;
+    sampleRight = getColorComponent(UpdateAgentTrailMap[int2(agentPosition + sampleOffset)], species);
 
     if (sampleStraight < sampleLeft && sampleStraight < sampleRight)
 	{
 		float randomSteerStrength = random(agentPosition.y * canvasWidth + agentPosition.x);
 
-		if (randomSteerStrength >= 0.5) return agentAngle - (-0.78);
-		else return agentAngle + (-0.78);
+		if (randomSteerStrength >= 0.5) return agentAngle + 1.2;
+		else return agentAngle - 1.2;
 	}
-	else if (sampleLeft < sampleRight) return agentAngle - (-0.78);
-	else if (sampleLeft > sampleRight) return agentAngle + (-0.78);
+	else if (sampleLeft < sampleRight) return agentAngle + 1.2;
+	else if (sampleLeft > sampleRight) return agentAngle - 1.2;
 
     return agentAngle;
 }
@@ -73,8 +83,9 @@ void UpdateAgent (uint3 id : SV_DispatchThreadID)
     float2 position = agent.position;
     float speed = agent.speed;
     float angle = agent.angle;
+    int species = agent.species;
 
-    Agents[id.x].angle = getUpdatedAngle(position, angle);
+    Agents[id.x].angle = getUpdatedAngle(position, angle, species);
 
     float2 velocity = speed * float2(cos(angle), sin(angle));
     float2 newPosition = position + velocity;
@@ -95,7 +106,12 @@ void UpdateAgent (uint3 id : SV_DispatchThreadID)
     // Updating position if new position is within bounds
     if (updatePosition) Agents[id.x].position = newPosition; 
 
-    UpdateAgentTrailMap[int2(position)] = float4(1, 1, 1, 1);
+    if (species == 0)
+        UpdateAgentTrailMap[int2(position)] = float4(0, 1, 1, 1);
+    else if (species == 1)
+        UpdateAgentTrailMap[int2(position)] = float4(1, 0, 1, 1);
+    else if (species == 2)
+        UpdateAgentTrailMap[int2(position)] = float4(1, 1, 0, 1);
 }
 
 #pragma kernel DiffuseAndDissipate
@@ -120,7 +136,7 @@ void DiffuseAndDissipate (uint3 id : SV_DispatchThreadID)
 			sum += DiffuseAndDissipateTrailMap[int2(sampleX, sampleY)];
 		}
 	}
-    float4 diffusedValue = 0.99 * (sum / 9) + 0.01 * originalValue;
+    float4 diffusedValue = 0.2 * (sum / 9) + 0.8 * originalValue;
 
     // Subtracting value simulates dissipation
     DiffuseAndDissipateTrailMap[id.xy] = max(0, diffusedValue - 0.01);
