@@ -6,8 +6,8 @@ public class PhysarumSimulation : MonoBehaviour
 {
     public ComputeShader PhysarumSimulationComputeShader;
 
-    private const int WIDTH = 960;
-    private const int HEIGHT = 960;
+    private const int WIDTH = 1080;
+    private const int HEIGHT = 1080;
 
     private RenderTexture trailMap;
 
@@ -19,7 +19,7 @@ public class PhysarumSimulation : MonoBehaviour
         public int species;
     }
 
-    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.4f);
+    private int NUM_AGENTS = Mathf.CeilToInt(WIDTH * HEIGHT * 0.2f);
     private ComputeBuffer agentsBuffer;
 
     private void OnEnable()
@@ -40,7 +40,7 @@ public class PhysarumSimulation : MonoBehaviour
         List<Agent> agents = new List<Agent>();
 
         float theta;
-        float r = 320;
+        float r = 240;
 
         for (int i = 0; i < NUM_AGENTS; ++i)
         {
@@ -84,6 +84,23 @@ public class PhysarumSimulation : MonoBehaviour
                 agent.species = 1;
                 agents.Add(agent);
             }
+        }
+
+        return agents;
+    }
+
+    private List<Agent> InitAgents03()
+    {
+        List<Agent> agents = new List<Agent>();
+
+        for (int i = 0; i < NUM_AGENTS; ++i)
+        {
+            Agent agent = new Agent();
+            agent.position = new Vector2(Random.Range(0, WIDTH), HEIGHT / 2);
+            agent.speed = Random.Range(0.6f, 1.2f);
+            agent.angle = Random.Range(0, Mathf.PI * 2);
+            agent.species = Random.Range(0, 3);
+            agents.Add(agent);
         }
 
         return agents;
