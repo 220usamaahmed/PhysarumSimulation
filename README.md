@@ -1,5 +1,5 @@
 # Physarum Simulation
-This is an implementation of [this paper](https://uwe-repository.worktribe.com/output/980579) which talks about pattern formation and evolution in approximations of physarum transport networks. It uses HLSL in unity and was used to create procedural artwork. The results can be seen on [my webiste](https://colatz.com).
+This is an implementation of [this paper](https://uwe-repository.worktribe.com/output/980579) which talks about pattern formation and evolution in approximations of physarum transport networks. It uses HLSL in unity and was used to create procedural artwork. The results can be seen on [my website](https://colatz.com).
 
 ## Usage
 1. Load the project into Unity
